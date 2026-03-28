@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useOrgStore } from '../stores/orgStore';
 import { usePeopleStore } from '../stores/peopleStore';
 import { NODE_TYPES } from '../data/seedData';
+import { useDragNode } from '../hooks/useDragNode';
 
 export default function NodeCard({ node, depth = 0 }) {
   const {
@@ -25,6 +26,7 @@ export default function NodeCard({ node, depth = 0 }) {
   const isSelected = selectedNodeId === node.id;
   const responsables = people.filter(p => p.puestosAsignados.includes(node.id));
   const isVacant = responsables.length === 0;
+  const { dragProps, dropProps, isDragging, isDropTarget, draggingNodeId } = useDragNode(node.id);
 
   useEffect(() => {
     if (editingLabel && inputRef.current) inputRef.current.focus();
@@ -123,13 +125,18 @@ export default function NodeCard({ node, depth = 0 }) {
         className={`node-card relative flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer select-none group
           ${isSelected ? 'ring-1' : ''}
           ${isVacant ? 'vacant-border' : ''}
+          ${isDragging ? 'dragging' : ''}
+          ${isDropTarget ? 'drop-target' : ''}
         `}
         style={{
-          borderColor: isSelected ? node.accent : 'var(--c-border)',
-          backgroundColor: isSelected ? `${node.accent}15` : 'var(--c-bg-card)',
-          boxShadow: isSelected ? `0 0 12px ${node.accent}20` : 'none',
+          borderColor: isDropTarget ? node.accent : isSelected ? node.accent : 'var(--c-border)',
+          backgroundColor: isDropTarget ? `${node.accent}25` : isSelected ? `${node.accent}15` : 'var(--c-bg-card)',
+          boxShadow: isDropTarget ? `0 0 16px ${node.accent}40` : isSelected ? `0 0 12px ${node.accent}20` : 'none',
           ringColor: node.accent,
+          opacity: isDragging ? 0.4 : draggingNodeId && !isDropTarget ? 0.7 : 1,
         }}
+        {...dragProps}
+        {...dropProps}
         onClick={(e) => { e.stopPropagation(); selectNode(node.id); }}
         onDoubleClick={handleDoubleClick}
         onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setShowMenu(true); }}

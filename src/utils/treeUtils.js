@@ -97,6 +97,20 @@ export function getUniqueAreas(tree) {
   return Array.from(areas.values());
 }
 
+export function isDescendant(tree, ancestorId, nodeId) {
+  const ancestor = findNode(tree, ancestorId);
+  if (!ancestor) return false;
+  // Check if nodeId exists within the subtree of ancestor (excluding ancestor itself)
+  const search = (node) => {
+    for (const child of node.children || []) {
+      if (child.id === nodeId) return true;
+      if (search(child)) return true;
+    }
+    return false;
+  };
+  return search(ancestor);
+}
+
 export function searchTree(tree, query) {
   const q = query.toLowerCase();
   return getAllNodes(tree).filter(node =>

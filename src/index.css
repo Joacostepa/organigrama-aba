@@ -104,3 +104,70 @@ body {
   transform-origin: 0 0;
   will-change: transform;
 }
+
+/* ── Diagram connectors ── */
+
+/* Vertical line down from parent card */
+.diagram-node > .diagram-children::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 1px;
+  height: 20px;
+  background: var(--c-border);
+}
+
+/* Horizontal line across children */
+.diagram-children::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  height: 1px;
+  background: var(--c-border);
+  /* spans from first child center to last child center */
+  left: calc(50% / var(--child-count));
+  right: calc(50% / var(--child-count));
+}
+
+/* Single child: no horizontal line needed */
+.diagram-children:has(> :only-child)::after {
+  display: none;
+}
+
+/* Vertical stub from horizontal line down to each child */
+.diagram-children > .diagram-node::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 1px;
+  height: 20px;
+  background: var(--c-border);
+}
+
+/* Vertical line from parent card bottom to horizontal line */
+.diagram-node:has(> .diagram-children)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  height: 16px;
+  background: var(--c-border);
+}
+
+.diagram-card:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Drag & drop ── */
+.dragging {
+  opacity: 0.4 !important;
+  cursor: grabbing !important;
+}
+
+.drop-target {
+  border-style: dashed !important;
+  transform: scale(1.02);
+}

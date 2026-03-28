@@ -1,20 +1,25 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useOrgStore } from '../stores/orgStore';
 import { usePeopleStore } from '../stores/peopleStore';
-import { searchTree, findNode } from '../utils/treeUtils';
+import { useThemeStore } from '../stores/themeStore';
+import { searchTree } from '../utils/treeUtils';
 import NodeCard from '../components/NodeCard';
+import DiagramView from '../components/DiagramView';
 import DetailPanel from '../components/DetailPanel';
 import Toolbar from '../components/Toolbar';
 
 export default function OrgChart() {
-  const { tree, selectedNodeId, clearSelection, searchQuery, filterArea, filterVacant } = useOrgStore();
+  const { tree, selectedNodeId, clearSelection, searchQuery, expandAll } = useOrgStore();
   const people = usePeopleStore(s => s.people);
+  const theme = useThemeStore(s => s.theme);
 
+  const [viewMode, setViewMode] = useState('list');
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
+  const treeContentRef = useRef(null);
 
   const zoomIn = () => setZoom(z => Math.min(z + 0.15, 2));
   const zoomOut = () => setZoom(z => Math.max(z - 0.15, 0.3));
@@ -51,9 +56,43 @@ export default function OrgChart() {
 
   const searchResults = searchQuery ? searchTree(tree, searchQuery) : null;
 
+  // Export helpers
+  const handleExportPNG = async () => {
+    const el = treeContentRef.current;
+    if (!el) return;
+    try {
+      const { exportToPNG } = await import('../utils/exportImage.js');
+      await exportToPNG(el, `organigrama-${new Date().toISOString().slice(0, 10)}.png`, theme);
+    } catch (err) {
+      console.error(err);
+      alert('Error al exportar PNG.');
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const el = treeContentRef.current;
+    if (!el) return;
+    try {
+      const { exportToPDF } = await import('../utils/exportImage.js');
+      await exportToPDF(el, `organigrama-${new Date().toISOString().slice(0, 10)}.pdf`, theme);
+    } catch (err) {
+      console.error(err);
+      alert('Error al exportar PDF.');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <Toolbar zoom={zoom} onZoomIn={zoomIn} onZoomOut={zoomOut} onZoomReset={zoomReset} />
+      <Toolbar
+        zoom={zoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onZoomReset={zoomReset}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onExportPNG={handleExportPNG}
+        onExportPDF={handleExportPDF}
+      />
 
       {searchQuery && searchResults && (
         <div
@@ -77,11 +116,17 @@ export default function OrgChart() {
         }}
       >
         <div
-          className="zoom-container p-8 min-w-max"
+          className="zoom-container min-w-max"
           style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
         >
-          <div className="max-w-xl">
-            <NodeCard node={tree} />
+          <div ref={treeContentRef}>
+            {viewMode === 'list' ? (
+              <div className="max-w-xl p-8">
+                <NodeCard node={tree} />
+              </div>
+            ) : (
+              <DiagramView tree={tree} />
+            )}
           </div>
         </div>
       </div>

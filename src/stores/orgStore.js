@@ -28,6 +28,11 @@ export const useOrgStore = create((set, get) => ({
   filterVacant: false,
   _currentOrgId: null,
   _unsubscribe: null,
+  draggingNodeId: null,
+  dropTargetId: null,
+  setDragging: (id) => set({ draggingNodeId: id }),
+  setDropTarget: (id) => set({ dropTargetId: id }),
+  clearDragState: () => set({ draggingNodeId: null, dropTargetId: null }),
 
   loadOrg: (orgId) => {
     const { _unsubscribe, _currentOrgId } = get();
