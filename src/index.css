@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'DM Sans', sans-serif;
+}
+
+/* ── Theme tokens ── */
+:root,
+[data-theme="dark"] {
+  --c-bg-main: #0a0e14;
+  --c-bg-surface: #0d1117;
+  --c-bg-card: #0f1419;
+  --c-bg-input: #161b22;
+  --c-bg-menu: #1a1f2e;
+  --c-bg-hover: rgba(255,255,255,0.05);
+  --c-bg-active: rgba(255,255,255,0.10);
+  --c-border: #1e293b;
+  --c-border-light: #334155;
+  --c-text-primary: #ffffff;
+  --c-text-secondary: #d1d5db;
+  --c-text-tertiary: #9ca3af;
+  --c-text-muted: #6b7280;
+  --c-text-faint: #4b5563;
+  --c-overlay: rgba(0,0,0,0.30);
+  --c-scrollbar: #1e293b;
+  --c-scrollbar-hover: #334155;
+  --c-avatar-from: #374151;
+  --c-avatar-to: #1f2937;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --c-bg-main: #f3f4f6;
+  --c-bg-surface: #ffffff;
+  --c-bg-card: #ffffff;
+  --c-bg-input: #f0f1f3;
+  --c-bg-menu: #ffffff;
+  --c-bg-hover: rgba(0,0,0,0.04);
+  --c-bg-active: rgba(0,0,0,0.08);
+  --c-border: #e2e8f0;
+  --c-border-light: #cbd5e1;
+  --c-text-primary: #111827;
+  --c-text-secondary: #374151;
+  --c-text-tertiary: #6b7280;
+  --c-text-muted: #9ca3af;
+  --c-text-faint: #d1d5db;
+  --c-overlay: rgba(0,0,0,0.15);
+  --c-scrollbar: #cbd5e1;
+  --c-scrollbar-hover: #94a3b8;
+  --c-avatar-from: #d1d5db;
+  --c-avatar-to: #e5e7eb;
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--c-bg-main);
+  color: var(--c-text-secondary);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-scrollbar) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-scrollbar);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-scrollbar-hover);
+}
+
+.node-card {
+  transition: all 0.15s ease;
+}
+.node-card:hover {
+  transform: translateY(-1px);
+}
+
+.vacant-border {
+  border-style: dashed !important;
+}
+
+.detail-panel {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.context-menu {
+  animation: fadeIn 0.1s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.zoom-container {
+  transform-origin: 0 0;
+  will-change: transform;
+}
