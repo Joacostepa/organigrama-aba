@@ -3,51 +3,69 @@ import { v4 as uuidv4 } from 'uuid';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
-const STORAGE_KEY = 'aba-personas';
-const FIRESTORE_DOC = doc(db, 'organigrama', 'people');
+function cacheKey(orgId) { return `aba-people-${orgId}`; }
 
-function loadFromCache() {
+function loadFromCache(orgId) {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(cacheKey(orgId));
     return data ? JSON.parse(data) : [];
   } catch {
     return [];
   }
 }
 
-function saveToCache(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function saveToFirestore(data) {
-  saveToCache(data);
-  setDoc(FIRESTORE_DOC, { data: JSON.stringify(data) }).catch(err =>
-    console.error('Error guardando personas en Firestore:', err)
-  );
+function saveToCache(orgId, data) {
+  localStorage.setItem(cacheKey(orgId), JSON.stringify(data));
 }
 
 export const usePeopleStore = create((set, get) => ({
-  people: loadFromCache(),
-  _initialized: false,
+  people: [],
+  _currentOrgId: null,
+  _unsubscribe: null,
 
-  initListener: () => {
-    if (get()._initialized) return;
-    set({ _initialized: true });
-    onSnapshot(FIRESTORE_DOC, (snap) => {
+  loadOrg: (orgId) => {
+    const { _unsubscribe, _currentOrgId } = get();
+    if (_currentOrgId === orgId) return;
+
+    if (_unsubscribe) _unsubscribe();
+
+    const cached = loadFromCache(orgId);
+    set({ people: cached, _currentOrgId: orgId });
+
+    const docRef = doc(db, 'organigramas', orgId, 'data', 'people');
+    const unsub = onSnapshot(docRef, (snap) => {
       if (snap.exists()) {
         try {
           const people = JSON.parse(snap.data().data);
-          saveToCache(people);
-          set({ people });
+          saveToCache(orgId, people);
+          if (get()._currentOrgId === orgId) {
+            set({ people });
+          }
         } catch (err) {
-          console.error('Error parseando personas de Firestore:', err);
+          console.error('Error parseando personas:', err);
         }
       } else {
-        saveToFirestore([]);
+        setDoc(docRef, { data: JSON.stringify([]) });
       }
-    }, (err) => {
-      console.error('Error en listener de personas:', err);
     });
+
+    set({ _unsubscribe: unsub });
+  },
+
+  unloadOrg: () => {
+    const { _unsubscribe } = get();
+    if (_unsubscribe) _unsubscribe();
+    set({ _currentOrgId: null, _unsubscribe: null, people: [] });
+  },
+
+  _save: (people) => {
+    const orgId = get()._currentOrgId;
+    if (!orgId) return;
+    saveToCache(orgId, people);
+    const docRef = doc(db, 'organigramas', orgId, 'data', 'people');
+    setDoc(docRef, { data: JSON.stringify(people) }).catch(err =>
+      console.error('Error guardando personas:', err)
+    );
   },
 
   addPerson: (person) => {
@@ -66,7 +84,7 @@ export const usePeopleStore = create((set, get) => ({
       updatedAt: now,
     };
     const updated = [...get().people, newPerson];
-    saveToFirestore(updated);
+    get()._save(updated);
     set({ people: updated });
     return newPerson;
   },
@@ -75,13 +93,13 @@ export const usePeopleStore = create((set, get) => ({
     const updated = get().people.map(p =>
       p.id === id ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
     );
-    saveToFirestore(updated);
+    get()._save(updated);
     set({ people: updated });
   },
 
   removePerson: (id) => {
     const updated = get().people.filter(p => p.id !== id);
-    saveToFirestore(updated);
+    get()._save(updated);
     set({ people: updated });
   },
 
@@ -95,7 +113,7 @@ export const usePeopleStore = create((set, get) => ({
       }
       return p;
     });
-    saveToFirestore(updated);
+    get()._save(updated);
     set({ people: updated });
   },
 
@@ -110,23 +128,21 @@ export const usePeopleStore = create((set, get) => ({
       }
       return p;
     });
-    saveToFirestore(updated);
+    get()._save(updated);
     set({ people: updated });
   },
 
   getPersonById: (id) => get().people.find(p => p.id === id),
-
   getPeopleForNode: (nodeId) => get().people.filter(p => p.puestosAsignados.includes(nodeId)),
-
   getUnassignedPeople: () => get().people.filter(p => p.puestosAsignados.length === 0),
 
   importPeople: (people) => {
-    saveToFirestore(people);
+    get()._save(people);
     set({ people });
   },
 
   resetPeople: () => {
-    saveToFirestore([]);
+    get()._save([]);
     set({ people: [] });
   },
 }));

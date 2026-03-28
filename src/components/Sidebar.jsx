@@ -2,7 +2,7 @@ import { useOrgStore } from '../stores/orgStore';
 import { useThemeStore } from '../stores/themeStore';
 import { getUniqueAreas, countNodes, countVacant } from '../utils/treeUtils';
 
-export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle }) {
+export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle, orgName, onBack }) {
   const { tree, searchQuery, setSearchQuery, filterArea, setFilterArea, filterVacant, setFilterVacant } = useOrgStore();
   const { theme, toggleTheme } = useThemeStore();
 
@@ -47,10 +47,22 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle }
       {/* Header */}
       <div className="px-3 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid var(--c-border)' }}>
         {!collapsed && (
-          <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>Andamios Buenos Aires</h1>
-            <p className="text-xs truncate" style={{ color: 'var(--c-text-muted)' }}>Organigrama</p>
-          </div>
+          <>
+            <button
+              onClick={onBack}
+              className="w-7 h-7 flex items-center justify-center rounded text-xs flex-shrink-0 transition-colors"
+              style={{ color: 'var(--c-text-muted)' }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--c-bg-hover)'; e.currentTarget.style.color = 'var(--c-text-primary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--c-text-muted)'; }}
+              title="Volver a mis organigramas"
+            >
+              ←
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-sm font-bold tracking-tight truncate" style={{ color: 'var(--c-text-primary)' }}>{orgName || 'Organigrama'}</h1>
+              <p className="text-xs truncate" style={{ color: 'var(--c-text-muted)' }}>Andamios Buenos Aires</p>
+            </div>
+          </>
         )}
         <button
           onClick={onToggle}
@@ -65,6 +77,15 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle }
 
       {collapsed ? (
         <div className="flex flex-col items-center gap-2 py-4">
+          <button
+            onClick={onBack}
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-colors"
+            style={{ color: 'var(--c-text-muted)' }}
+            title="Volver a mis organigramas"
+          >
+            ←
+          </button>
+          <div className="w-6 my-1" style={{ borderTop: '1px solid var(--c-border)' }} />
           {navIcon('orgchart', '◆', 'Organigrama')}
           {navIcon('team', '👤', 'Equipo')}
           {navIcon('dashboard', '📊', 'Resumen')}

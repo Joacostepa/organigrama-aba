@@ -4,63 +4,96 @@ import { db } from '../firebase';
 import { seedOrgData } from '../data/seedData';
 import { updateNode, addChild, removeNode, moveNode } from '../utils/treeUtils';
 
-const STORAGE_KEY = 'aba-organigrama';
-const FIRESTORE_DOC = doc(db, 'organigrama', 'tree');
+function cacheKey(orgId) { return `aba-org-${orgId}`; }
 
-function loadFromCache() {
+function loadFromCache(orgId) {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(cacheKey(orgId));
     return data ? JSON.parse(data) : null;
   } catch {
     return null;
   }
 }
 
-function saveToCache(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function saveToFirestore(data) {
-  saveToCache(data);
-  setDoc(FIRESTORE_DOC, { data: JSON.stringify(data) }).catch(err =>
-    console.error('Error guardando en Firestore:', err)
-  );
+function saveToCache(orgId, data) {
+  localStorage.setItem(cacheKey(orgId), JSON.stringify(data));
 }
 
 export const useOrgStore = create((set, get) => ({
-  tree: loadFromCache() || structuredClone(seedOrgData),
+  tree: structuredClone(seedOrgData),
   selectedNodeId: null,
   expandedNodes: new Set(['dg', 'tec_com', 'ops', 'deposito', 'admin', 'sistemas']),
   searchQuery: '',
   filterArea: null,
   filterVacant: false,
-  _initialized: false,
+  _currentOrgId: null,
+  _unsubscribe: null,
 
-  initListener: () => {
-    if (get()._initialized) return;
-    set({ _initialized: true });
-    onSnapshot(FIRESTORE_DOC, (snap) => {
+  loadOrg: (orgId) => {
+    const { _unsubscribe, _currentOrgId } = get();
+    if (_currentOrgId === orgId) return;
+
+    // Cleanup previous listener
+    if (_unsubscribe) _unsubscribe();
+
+    // Load from cache immediately
+    const cached = loadFromCache(orgId);
+    set({
+      tree: cached || structuredClone(seedOrgData),
+      selectedNodeId: null,
+      _currentOrgId: orgId,
+      searchQuery: '',
+      filterArea: null,
+      filterVacant: false,
+      expandedNodes: new Set(['dg']),
+    });
+
+    // Start Firestore listener
+    const docRef = doc(db, 'organigramas', orgId, 'data', 'tree');
+    const unsub = onSnapshot(docRef, (snap) => {
       if (snap.exists()) {
         try {
           const tree = JSON.parse(snap.data().data);
-          saveToCache(tree);
-          set({ tree });
+          saveToCache(orgId, tree);
+          // Only update if we're still on the same org
+          if (get()._currentOrgId === orgId) {
+            set({ tree });
+          }
         } catch (err) {
-          console.error('Error parseando datos de Firestore:', err);
+          console.error('Error parseando árbol:', err);
         }
       } else {
-        // First time: push seed data to Firestore
+        // First time: push seed data
         const seed = structuredClone(seedOrgData);
-        saveToFirestore(seed);
-        set({ tree: seed });
+        setDoc(docRef, { data: JSON.stringify(seed) });
+        saveToCache(orgId, seed);
+        if (get()._currentOrgId === orgId) {
+          set({ tree: seed });
+        }
       }
-    }, (err) => {
-      console.error('Error en listener de Firestore:', err);
     });
+
+    set({ _unsubscribe: unsub });
+  },
+
+  unloadOrg: () => {
+    const { _unsubscribe } = get();
+    if (_unsubscribe) _unsubscribe();
+    set({ _currentOrgId: null, _unsubscribe: null, selectedNodeId: null });
+  },
+
+  _save: (tree) => {
+    const orgId = get()._currentOrgId;
+    if (!orgId) return;
+    saveToCache(orgId, tree);
+    const docRef = doc(db, 'organigramas', orgId, 'data', 'tree');
+    setDoc(docRef, { data: JSON.stringify(tree) }).catch(err =>
+      console.error('Error guardando árbol:', err)
+    );
   },
 
   setTree: (tree) => {
-    saveToFirestore(tree);
+    get()._save(tree);
     set({ tree });
   },
 
@@ -91,36 +124,36 @@ export const useOrgStore = create((set, get) => ({
 
   updateNodeData: (id, updates) => {
     const newTree = updateNode(get().tree, id, updates);
-    saveToFirestore(newTree);
+    get()._save(newTree);
     set({ tree: newTree });
   },
 
   addChildNode: (parentId, newNode) => {
     const newTree = addChild(get().tree, parentId, newNode);
-    saveToFirestore(newTree);
+    get()._save(newTree);
     set({ tree: newTree });
   },
 
   removeNodeById: (id, reparent = false) => {
     const newTree = removeNode(get().tree, id, reparent);
-    saveToFirestore(newTree);
+    get()._save(newTree);
     set({ tree: newTree, selectedNodeId: null });
   },
 
   moveNodeTo: (nodeId, newParentId) => {
     const newTree = moveNode(get().tree, nodeId, newParentId);
-    saveToFirestore(newTree);
+    get()._save(newTree);
     set({ tree: newTree });
   },
 
   resetToSeed: () => {
     const fresh = structuredClone(seedOrgData);
-    saveToFirestore(fresh);
+    get()._save(fresh);
     set({ tree: fresh, selectedNodeId: null });
   },
 
   importTree: (tree) => {
-    saveToFirestore(tree);
+    get()._save(tree);
     set({ tree, selectedNodeId: null });
   },
 
