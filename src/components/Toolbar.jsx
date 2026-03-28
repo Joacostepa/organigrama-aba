@@ -3,18 +3,19 @@ import { useOrgStore } from '../stores/orgStore';
 import { usePeopleStore } from '../stores/peopleStore';
 import { exportToJSON, importFromJSON } from '../utils/exportUtils';
 
-function ToolBtn({ onClick, children, title, danger, active }) {
+function ToolBtn({ onClick, children, title, danger, active, disabled }) {
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       title={title}
       className={`px-2.5 py-1.5 rounded-lg text-xs transition-colors ${danger ? 'text-red-400/70 hover:text-red-400 hover:bg-red-500/10' : ''}`}
       style={danger ? {} : {
-        color: active ? 'var(--c-text-primary)' : 'var(--c-text-tertiary)',
+        color: active ? 'var(--c-text-primary)' : disabled ? 'var(--c-text-faint)' : 'var(--c-text-tertiary)',
         backgroundColor: active ? 'var(--c-bg-active)' : 'transparent',
+        cursor: disabled ? 'default' : 'pointer',
       }}
-      onMouseEnter={e => { if (!danger && !active) { e.currentTarget.style.backgroundColor = 'var(--c-bg-hover)'; e.currentTarget.style.color = 'var(--c-text-primary)'; }}}
-      onMouseLeave={e => { if (!danger && !active) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--c-text-tertiary)'; }}}
+      onMouseEnter={e => { if (!danger && !active && !disabled) { e.currentTarget.style.backgroundColor = 'var(--c-bg-hover)'; e.currentTarget.style.color = 'var(--c-text-primary)'; }}}
+      onMouseLeave={e => { if (!danger && !active && !disabled) { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--c-text-tertiary)'; }}}
     >
       {children}
     </button>
@@ -22,7 +23,7 @@ function ToolBtn({ onClick, children, title, danger, active }) {
 }
 
 export default function Toolbar({ zoom, onZoomIn, onZoomOut, onZoomReset, viewMode, onViewModeChange, treeRef, onExportPNG, onExportPDF }) {
-  const { tree, expandAll, collapseAll, resetToSeed, importTree } = useOrgStore();
+  const { tree, expandAll, collapseAll, resetToSeed, importTree, undo, redo, canUndo, canRedo } = useOrgStore();
   const { people, importPeople, resetPeople } = usePeopleStore();
   const fileInputRef = useRef(null);
 
@@ -53,6 +54,14 @@ export default function Toolbar({ zoom, onZoomIn, onZoomOut, onZoomReset, viewMo
 
   return (
     <div className="flex items-center gap-1 px-3 py-2" style={{ backgroundColor: 'var(--c-bg-surface)', borderBottom: '1px solid var(--c-border)' }}>
+      {/* Undo / Redo */}
+      <div className="flex items-center gap-1">
+        <ToolBtn onClick={undo} title="Deshacer (Ctrl+Z)" disabled={!canUndo()}>↩ Deshacer</ToolBtn>
+        <ToolBtn onClick={redo} title="Rehacer (Ctrl+Y)" disabled={!canRedo()}>↪ Rehacer</ToolBtn>
+      </div>
+
+      <div className="w-px h-5 mx-1" style={{ backgroundColor: 'var(--c-border)' }} />
+
       {/* Expand / Collapse */}
       <div className="flex items-center gap-1">
         <ToolBtn onClick={expandAll} title="Expandir todo">⊞ Expandir</ToolBtn>

@@ -9,9 +9,25 @@ import DetailPanel from '../components/DetailPanel';
 import Toolbar from '../components/Toolbar';
 
 export default function OrgChart() {
-  const { tree, selectedNodeId, clearSelection, searchQuery, expandAll } = useOrgStore();
+  const { tree, selectedNodeId, clearSelection, searchQuery, expandAll, undo, redo } = useOrgStore();
   const people = usePeopleStore(s => s.people);
   const theme = useThemeStore(s => s.theme);
+
+  // Ctrl+Z / Ctrl+Y keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo]);
 
   const [viewMode, setViewMode] = useState('list');
   const [zoom, setZoom] = useState(1);
