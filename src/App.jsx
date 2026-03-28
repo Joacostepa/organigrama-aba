@@ -15,25 +15,23 @@ export default function App() {
 
   const loadOrg = useOrgStore(s => s.loadOrg);
   const unloadOrg = useOrgStore(s => s.unloadOrg);
-  const loadPeopleOrg = usePeopleStore(s => s.loadOrg);
-  const unloadPeopleOrg = usePeopleStore(s => s.unloadOrg);
+  const initPeople = usePeopleStore(s => s.initListener);
   const initOrgList = useOrgListStore(s => s.initListener);
   const orgList = useOrgListStore(s => s.orgList);
 
   useEffect(() => {
     initOrgList();
-  }, [initOrgList]);
+    initPeople();
+  }, [initOrgList, initPeople]);
 
   const handleSelectOrg = (orgId) => {
     setActiveOrgId(orgId);
     loadOrg(orgId);
-    loadPeopleOrg(orgId);
     setCurrentPage('orgchart');
   };
 
   const handleBackToList = () => {
     unloadOrg();
-    unloadPeopleOrg();
     setActiveOrgId(null);
   };
 
