@@ -27,6 +27,7 @@ export const useOrgStore = create((set, get) => ({
   expandedNodes: new Set(['dg', 'tec_com', 'ops', 'deposito', 'admin', 'sistemas']),
   searchQuery: '',
   filterArea: null,
+  filterType: null,
   filterVacant: false,
   _currentOrgId: null,
   _unsubscribe: null,
@@ -217,5 +218,6 @@ export const useOrgStore = create((set, get) => ({
 
   setSearchQuery: (q) => set({ searchQuery: q }),
   setFilterArea: (area) => set({ filterArea: area }),
+  setFilterType: (type) => set({ filterType: type }),
   setFilterVacant: (v) => set({ filterVacant: v }),
 }));

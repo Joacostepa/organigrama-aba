@@ -1,14 +1,18 @@
 import { useOrgStore } from '../stores/orgStore';
+import { usePeopleStore } from '../stores/peopleStore';
 import { useThemeStore } from '../stores/themeStore';
 import { getUniqueAreas, countNodes, countVacant } from '../utils/treeUtils';
+import { NODE_TYPES } from '../data/seedData';
 
 export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle, orgName, onBack }) {
-  const { tree, searchQuery, setSearchQuery, filterArea, setFilterArea, filterVacant, setFilterVacant } = useOrgStore();
+  const { tree, searchQuery, setSearchQuery, filterArea, setFilterArea, filterType, setFilterType, filterVacant, setFilterVacant } = useOrgStore();
+  const people = usePeopleStore(s => s.people);
   const { theme, toggleTheme } = useThemeStore();
 
   const areas = getUniqueAreas(tree);
   const totalNodes = countNodes(tree);
   const totalVacant = countVacant(tree);
+  const totalPeople = people.length;
 
   const navBtn = (page, icon, label) => (
     <button
@@ -158,6 +162,36 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle, 
                 </div>
               </div>
 
+              {/* Filter by type */}
+              <div>
+                <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--c-text-muted)' }}>Tipo</label>
+                <div className="mt-1.5 flex gap-1 flex-wrap">
+                  <button
+                    onClick={() => setFilterType(null)}
+                    className="px-2 py-1 rounded text-xs transition-colors"
+                    style={{
+                      color: !filterType ? 'var(--c-text-primary)' : 'var(--c-text-tertiary)',
+                      backgroundColor: !filterType ? 'var(--c-bg-active)' : 'transparent',
+                    }}
+                  >
+                    Todos
+                  </button>
+                  {Object.entries(NODE_TYPES).map(([key, t]) => (
+                    <button
+                      key={key}
+                      onClick={() => setFilterType(filterType === key ? null : key)}
+                      className="px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors"
+                      style={{
+                        color: filterType === key ? 'var(--c-text-primary)' : 'var(--c-text-tertiary)',
+                        backgroundColor: filterType === key ? 'var(--c-bg-active)' : 'transparent',
+                      }}
+                    >
+                      {t.icon} {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={() => setFilterVacant(!filterVacant)}
                 className="w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-colors"
@@ -189,6 +223,7 @@ export default function Sidebar({ currentPage, onNavigate, collapsed, onToggle, 
             <div className="px-3 py-3" style={{ borderTop: '1px solid var(--c-border)' }}>
               <div className="flex justify-between text-xs" style={{ color: 'var(--c-text-faint)' }}>
                 <span>{totalNodes} puestos</span>
+                <span>{totalPeople} personas</span>
                 <span>{totalVacant} vacantes</span>
               </div>
             </div>
