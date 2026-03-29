@@ -176,6 +176,14 @@ body {
   transform: translateY(-1px);
 }
 
+.diagram-enter {
+  animation: diagramFadeIn 0.25s ease;
+}
+@keyframes diagramFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Drag & drop ── */
 .dragging {
   opacity: 0.4 !important;
