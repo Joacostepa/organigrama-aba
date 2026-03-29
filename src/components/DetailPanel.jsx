@@ -5,7 +5,7 @@ import { findNode, getAllNodes } from '../utils/treeUtils';
 import { NODE_TYPES } from '../data/seedData';
 
 export default function DetailPanel() {
-  const { tree, selectedNodeId, clearSelection, updateNodeData, moveNodeTo } = useOrgStore();
+  const { tree, selectedNodeId, clearSelection, updateNodeData, moveNodeTo, removeNodeById } = useOrgStore();
   const { people, assignToNode, unassignFromNode } = usePeopleStore();
 
   const node = selectedNodeId ? findNode(tree, selectedNodeId) : null;
@@ -443,6 +443,32 @@ export default function DetailPanel() {
             Modificado: {node.updatedAt ? new Date(node.updatedAt).toLocaleDateString('es-AR') : '—'}
           </p>
         </div>
+
+        {/* Eliminar */}
+        {node.id !== 'dg' && (
+          <div className="pt-3" style={{ borderTop: '1px solid var(--c-border)' }}>
+            <button
+              onClick={() => {
+                const hasChildren = node.children?.length > 0;
+                if (hasChildren) {
+                  const choice = confirm(
+                    `"${node.label}" tiene ${node.children.length} puesto(s) debajo.\n\n` +
+                    `¿Querés mover los hijos al nivel superior? (Aceptar = mover, Cancelar = eliminar todo)`
+                  );
+                  removeNodeById(node.id, choice);
+                } else {
+                  if (confirm(`¿Estás seguro de que querés eliminar "${node.label}"?`)) {
+                    removeNodeById(node.id, false);
+                  }
+                }
+              }}
+              className="w-full py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+              style={{ border: '1px solid rgba(239,68,68,0.2)' }}
+            >
+              ✕ Eliminar {NODE_TYPES[node.nodeType]?.label?.toLowerCase() || 'nodo'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
