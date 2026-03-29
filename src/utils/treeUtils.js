@@ -120,3 +120,56 @@ export function searchTree(tree, query) {
     node.tasks?.some(t => t.toLowerCase().includes(q))
   );
 }
+
+/**
+ * Returns a Set of node IDs that match the active filters + all their ancestors.
+ * If no filters are active, returns null (show everything).
+ */
+export function getFilteredNodeIds(tree, { searchQuery, filterArea, filterType, filterVacant, people }) {
+  const hasFilter = searchQuery || filterArea || filterType || filterVacant;
+  if (!hasFilter) return null;
+
+  const allNodes = getAllNodes(tree);
+  const q = searchQuery?.toLowerCase() || '';
+
+  // Find nodes that directly match all active filters
+  const directMatches = allNodes.filter(node => {
+    if (q) {
+      const matchesSearch =
+        node.label.toLowerCase().includes(q) ||
+        node.subtitle?.toLowerCase().includes(q) ||
+        node.desc?.toLowerCase().includes(q) ||
+        node.tasks?.some(t => t.toLowerCase().includes(q));
+      if (!matchesSearch) return false;
+    }
+    if (filterType && node.nodeType !== filterType) return false;
+    if (filterVacant) {
+      const hasResponsable = people?.some(p => p.puestosAsignados.includes(node.id));
+      if (hasResponsable) return false;
+    }
+    if (filterArea) {
+      // Check if node is the area or a descendant of it
+      const areaNode = findNode(tree, filterArea);
+      if (areaNode) {
+        if (node.id !== filterArea && !isDescendant(tree, filterArea, node.id)) return false;
+      }
+    }
+    return true;
+  });
+
+  // Collect matched IDs + all ancestors so the path to the match is visible
+  const visibleIds = new Set();
+  for (const match of directMatches) {
+    visibleIds.add(match.id);
+    // Walk up to root adding ancestors
+    let current = match.id;
+    let parent = findParent(tree, current);
+    while (parent) {
+      visibleIds.add(parent.id);
+      current = parent.id;
+      parent = findParent(tree, current);
+    }
+  }
+
+  return visibleIds;
+}

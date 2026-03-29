@@ -2,14 +2,14 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useOrgStore } from '../stores/orgStore';
 import { usePeopleStore } from '../stores/peopleStore';
 import { useThemeStore } from '../stores/themeStore';
-import { searchTree } from '../utils/treeUtils';
+import { searchTree, getFilteredNodeIds } from '../utils/treeUtils';
 import NodeCard from '../components/NodeCard';
 import DiagramView from '../components/DiagramView';
 import DetailPanel from '../components/DetailPanel';
 import Toolbar from '../components/Toolbar';
 
 export default function OrgChart() {
-  const { tree, selectedNodeId, clearSelection, searchQuery, expandAll, undo, redo } = useOrgStore();
+  const { tree, selectedNodeId, clearSelection, searchQuery, filterArea, filterType, filterVacant, expandAll, undo, redo } = useOrgStore();
   const people = usePeopleStore(s => s.people);
   const theme = useThemeStore(s => s.theme);
 
@@ -71,6 +71,7 @@ export default function OrgChart() {
   const handleMouseUp = () => setIsPanning(false);
 
   const searchResults = searchQuery ? searchTree(tree, searchQuery) : null;
+  const filteredIds = getFilteredNodeIds(tree, { searchQuery, filterArea, filterType, filterVacant, people });
 
   // Export helpers
   const handleExportPNG = async () => {
@@ -138,10 +139,10 @@ export default function OrgChart() {
           <div ref={treeContentRef}>
             {viewMode === 'list' ? (
               <div className="max-w-xl p-8">
-                <NodeCard node={tree} />
+                <NodeCard node={tree} filteredIds={filteredIds} />
               </div>
             ) : (
-              <DiagramView tree={tree} />
+              <DiagramView tree={tree} filteredIds={filteredIds} />
             )}
           </div>
         </div>

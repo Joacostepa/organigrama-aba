@@ -3,7 +3,7 @@ import { usePeopleStore } from '../stores/peopleStore';
 import { NODE_TYPES } from '../data/seedData';
 import { useDragNode } from '../hooks/useDragNode';
 
-export default function DiagramNode({ node }) {
+export default function DiagramNode({ node, filteredIds }) {
   const { selectedNodeId, selectNode, expandedNodes, toggleExpand } = useOrgStore();
   const people = usePeopleStore(s => s.people);
 
@@ -13,6 +13,7 @@ export default function DiagramNode({ node }) {
   const responsables = people.filter(p => p.puestosAsignados.includes(node.id));
   const isVacant = responsables.length === 0;
   const { dragProps, dropProps, isDragging, isDropTarget, draggingNodeId } = useDragNode(node.id);
+  const isFiltered = filteredIds && !filteredIds.has(node.id);
 
   return (
     <div className="diagram-node flex flex-col items-center">
@@ -29,7 +30,7 @@ export default function DiagramNode({ node }) {
           backgroundColor: isDropTarget ? `${node.accent}25` : isSelected ? `${node.accent}15` : 'var(--c-bg-card)',
           boxShadow: isDropTarget ? `0 0 16px ${node.accent}40` : isSelected ? `0 0 12px ${node.accent}20` : 'none',
           ringColor: node.accent,
-          opacity: isDragging ? 0.4 : draggingNodeId && !isDropTarget ? 0.7 : 1,
+          opacity: isFiltered ? 0.15 : isDragging ? 0.4 : draggingNodeId && !isDropTarget ? 0.7 : 1,
         }}
         {...dragProps}
         {...dropProps}
@@ -92,7 +93,7 @@ export default function DiagramNode({ node }) {
       {hasChildren && isExpanded && (
         <div className="diagram-children flex flex-row items-start justify-center gap-2 mt-8 relative diagram-enter">
           {node.children.map(child => (
-            <DiagramNode key={child.id} node={child} />
+            <DiagramNode key={child.id} node={child} filteredIds={filteredIds} />
           ))}
         </div>
       )}

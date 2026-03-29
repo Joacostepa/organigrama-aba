@@ -4,7 +4,7 @@ import { usePeopleStore } from '../stores/peopleStore';
 import { NODE_TYPES } from '../data/seedData';
 import { useDragNode } from '../hooks/useDragNode';
 
-export default function NodeCard({ node, depth = 0 }) {
+export default function NodeCard({ node, depth = 0, filteredIds }) {
   const {
     selectedNodeId, selectNode, expandedNodes, toggleExpand,
     addChildNode, removeNodeById, updateNodeData
@@ -27,6 +27,7 @@ export default function NodeCard({ node, depth = 0 }) {
   const responsables = people.filter(p => p.puestosAsignados.includes(node.id));
   const isVacant = responsables.length === 0;
   const { dragProps, dropProps, isDragging, isDropTarget, draggingNodeId } = useDragNode(node.id);
+  const isFiltered = filteredIds && !filteredIds.has(node.id);
 
   useEffect(() => {
     if (editingLabel && inputRef.current) inputRef.current.focus();
@@ -133,7 +134,7 @@ export default function NodeCard({ node, depth = 0 }) {
           backgroundColor: isDropTarget ? `${node.accent}25` : isSelected ? `${node.accent}15` : 'var(--c-bg-card)',
           boxShadow: isDropTarget ? `0 0 16px ${node.accent}40` : isSelected ? `0 0 12px ${node.accent}20` : 'none',
           ringColor: node.accent,
-          opacity: isDragging ? 0.4 : draggingNodeId && !isDropTarget ? 0.7 : 1,
+          opacity: isFiltered ? 0.15 : isDragging ? 0.4 : draggingNodeId && !isDropTarget ? 0.7 : 1,
         }}
         {...dragProps}
         {...dropProps}
@@ -324,7 +325,7 @@ export default function NodeCard({ node, depth = 0 }) {
                 }}
               />
               {node.children.map(child => (
-                <NodeCard key={child.id} node={child} depth={depth + 1} />
+                <NodeCard key={child.id} node={child} depth={depth + 1} filteredIds={filteredIds} />
               ))}
             </div>
           </div>
