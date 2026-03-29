@@ -307,20 +307,27 @@ export default function NodeCard({ node, depth = 0 }) {
       )}
 
       {/* Children */}
-      {hasChildren && isExpanded && (
-        <div className="ml-6 mt-1 space-y-1 relative">
-          {/* Vertical connector line */}
-          <div
-            className="absolute top-0 w-px"
-            style={{
-              backgroundColor: 'var(--c-border)',
-              height: 'calc(100% - 12px)',
-              left: '-6px'
-            }}
-          />
-          {node.children.map(child => (
-            <NodeCard key={child.id} node={child} depth={depth + 1} />
-          ))}
+      {hasChildren && (
+        <div
+          className="expand-collapse"
+          style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+        >
+          <div className="overflow-hidden">
+            <div className="ml-6 mt-1 space-y-1 relative">
+              {/* Vertical connector line */}
+              <div
+                className="absolute top-0 w-px"
+                style={{
+                  backgroundColor: 'var(--c-border)',
+                  height: 'calc(100% - 12px)',
+                  left: '-6px'
+                }}
+              />
+              {node.children.map(child => (
+                <NodeCard key={child.id} node={child} depth={depth + 1} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

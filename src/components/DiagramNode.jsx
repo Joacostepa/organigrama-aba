@@ -89,11 +89,18 @@ export default function DiagramNode({ node }) {
       </div>
 
       {/* Children */}
-      {hasChildren && isExpanded && (
-        <div className="diagram-children flex flex-row items-start justify-center gap-2 mt-8 relative">
-          {node.children.map(child => (
-            <DiagramNode key={child.id} node={child} />
-          ))}
+      {hasChildren && (
+        <div
+          className="expand-collapse"
+          style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+        >
+          <div className="overflow-hidden">
+            <div className="diagram-children flex flex-row items-start justify-center gap-2 mt-8 relative">
+              {node.children.map(child => (
+                <DiagramNode key={child.id} node={child} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
