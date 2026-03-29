@@ -57,10 +57,10 @@ export default function OrgChart() {
   }, [handleWheel]);
 
   const handleMouseDown = (e) => {
-    if (e.target === containerRef.current || e.target.closest('.zoom-container') === e.target.querySelector('.zoom-container')?.parentElement) {
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    }
+    // Don't pan if clicking on interactive elements (cards, buttons, inputs)
+    if (e.target.closest('.node-card, .diagram-card, button, input, textarea, .detail-panel, .context-menu, .expand-collapse a')) return;
+    setIsPanning(true);
+    setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
 
   const handleMouseMove = (e) => {
